@@ -57,15 +57,21 @@ int main(int argc, char *argv[]) {
                     } 
                 } else {
                     pid_t pid=fork();
-                    if (pid == 0) {
-                        system("./compile.sh");
-                        exit(0);
+                    if(pid < 0) {
+                        perror("\nFork failed.\n");
+                        return -1;
+                    }
+                    else if (pid == 0) {
+                        execlp("bash", "bash", "compile.sh", argv[i], NULL);
+                        perror("\nExec failed.\n");
+                        return -2;
                     } else {
-                        waitpid(pid,0,0);
-                        printf("C compile is done");
+                        int status;
+                        wait(&status);
                     }
                 }
             }   
+            // if argument is a directory create new file using fork()
             if(S_ISDIR(st.st_mode) != 0) {
                 
             }
