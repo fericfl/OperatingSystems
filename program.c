@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
                             printf("Options: ");
                             int option;
                             int quit=1;
-                            while((option = getchar()) != EOF && quit == 1) {
+                            while((option = getchar()) != EOF && quit) {
                                 switch(option) {
                                     case '-': break;
                                     case 'n':
@@ -68,24 +68,38 @@ int main(int argc, char *argv[]) {
                         }
                         
                     } else {
-                        int status;
-                        wait(&status);
-                    }
-                    char* extension = strstr( argv[i], ".c");
+                        char* extension = strstr( argv[i], ".c");
                         if(extension != NULL) { 
+                                int pfd[2];
+                                if(pipe(pfd) < 0) {
+                                    perror("Pipe creation error\n");
+                                    exit(1);
+                                }
                                 pid_t pid=fork();
                                 if(pid < 0) {
                                     perror("\nFork failed.\n");
                                     return -1;
                                 }
                                 else if (pid == 0) {
+                                    close(pfd[0]);
+                                    dup2(pfd[1],1);
                                     execlp("bash", "bash", "compile.sh", argv[i], NULL);
+                                    close(pfd[1]);
                                     perror("\nExec failed.\n");
                                     return -2;
                                 } else {
+                                    close(pfd[1]);
+                                    FILE* stream=fdopen(pfd[0],"r");
+                                    
+                                    close(pfd[0]);
                                     int status;
                                     wait(&status);
                                 }
+                        int status;
+                        wait(&status);
+                        
+                    }
+                    
                     }   
                 // if argument is a directory create new file using fork()
                 if(S_ISDIR(st.st_mode) != 0) {
