@@ -52,7 +52,36 @@ int main(int argc, char *argv[]) {
                             case 'm':   printf("Time of last modification is: %ld\n", st.st_mtime);
                                         break;
 
-                            case 'a':   printf("Access rights are: %d\n", st.st_mode);
+                            case 'a':   printf("User:\n");
+                                        if(S_IRUSR & st.st_mode){
+                                            printf("Read: Yes\n");
+                                        } else printf("Read: No\n");
+                                        if(S_IWUSR & st.st_mode) {
+                                            printf("Write: Yes\n");
+                                        } else printf("Write: No\n");
+                                        if(S_IXUSR & st.st_mode) {
+                                            printf("Exec: Yes\n");
+                                        } else printf("Exec: No\n");
+                                        printf("Group:\n");
+                                        if(S_IRGRP & st.st_mode) {
+                                            printf("Read: Yes\n");
+                                        } else printf("Read: No\n");
+                                        if(S_IWGRP & st.st_mode) {
+                                            printf("Write: Yes\n");
+                                        } else printf("Write: No\n");
+                                        if(S_IXGRP & st.st_mode) {
+                                            printf("Exec: Yes\n");
+                                        } else printf("Exec: No\n");
+                                        printf("Other:\n");
+                                        if(S_IROTH & st.st_mode) {
+                                            printf("Read: Yes\n");
+                                        } else printf("Read: No\n");
+                                        if(S_IWOTH & st.st_mode) {
+                                            printf("Write: Yes\n");
+                                        } else printf("Write: No\n");
+                                        if(S_IXOTH & st.st_mode) {
+                                            printf("Exec: Yes\n");
+                                        } else printf("Exec: No\n");
                                         break;
 
                             case 'l':   char link[26];
