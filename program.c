@@ -143,7 +143,38 @@ int main(int argc, char *argv[]) {
                     float score = 0;
                     printf("Total score is: %.2f\n", getScore(score, errors, warnings));
                     close(pfd[0]);
-            }
+                } else {
+                    int pfd[2]; //[0] - read, [1] - write
+                    char buffer[30];
+                    int newfd;
+                    if(pipe(pfd) < 0) {
+                        perror("Could not create pipe");
+                        exit(-3);
+                    }
+
+                    int p2 = fork();
+                    if(p2 < 0) {
+                        perror("Could not create new process");
+                        exit(-4);
+                    } else if(p2 == 0) {
+                        close(pfd[0]);
+                        if((newfd = dup2(pfd[1],1))<0) {
+                            perror("Could not duplicate");
+                            exit(1);
+                        }
+                        execlp("bash", "bash", "word_count.sh", argv[i], NULL);
+                        //write(pfd[1], buffer, sizeof(buffer)/sizeof(buffer[0]));
+                        close(pfd[1]);
+                        exit(1);
+                    }
+                    close(pfd[1]); /* close the writting end of the pipe */
+                    FILE* stream = fdopen(pfd[0],"r");
+                    char string[100];
+                    fscanf(stream, "%s", string);
+                    int word_count = atoi(string);
+                    printf("Total lines: %d\n", word_count);
+                    close(pfd[0]);
+                }
         }
     }
     
