@@ -6,6 +6,17 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+float getScore(float score, int errors, int warnings) {
+    if(errors != 0)
+        score = 1;
+    else if (warnings == 0)
+        score = 10;
+    else if (warnings > 10)
+        score = 2;
+    else score = 2 + 8*(10-warnings)/10.0;
+    return score;
+}
+
 int main(int argc, char *argv[]) {
     struct stat st;
     
@@ -94,9 +105,14 @@ int main(int argc, char *argv[]) {
                     FILE* stream = fdopen(pfd[0],"r");
                     char string[100];
                     fscanf(stream, "%s", string);
-                    fprintf(stdout, "There are %s errors\n", string);
+                    int errors = atoi(string);
+                    //fprintf(stdout, "There are %d errors\n", errors);
                     fscanf(stream, "%s", string);
-                    fprintf(stdout, "There are %s warnings\n", string);
+                    int warnings = atoi(string);
+                    //fprintf(stdout, "There are %d warnings\n", warnings);
+
+                    float score = 0;
+                    printf("Total score is: %.2f\n", getScore(score, errors, warnings));
                     close(pfd[0]);
             }
         }
