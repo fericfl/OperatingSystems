@@ -1,3 +1,0 @@
-program.c:8.40
-program.c:8.40
-program.c:10.00
