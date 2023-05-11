@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-float getScore(float score, int errors, int warnings) {
+void getScore(int errors, int warnings, char* arg) {
+    float score = 0;
     if(errors != 0)
         score = 1;
     else if (warnings == 0)
@@ -14,7 +15,48 @@ float getScore(float score, int errors, int warnings) {
     else if (warnings > 10)
         score = 2;
     else score = 2 + 8*(10-warnings)/10.0;
-    return score;
+    FILE* out = fopen("score.txt", "a");
+    if(!out) {
+        perror("Could not open file");
+        exit(1);
+    }
+    fprintf(out,"%s:%.2f\n",arg, score);
+    fclose(out);
+}
+
+void access_rights(char* arg) {
+    struct stat st;
+    lstat(arg, &st);
+    printf("User:\n");
+    if(S_IRUSR & st.st_mode){
+        printf("Read: Yes\n");
+    } else printf("Read: No\n");
+    if(S_IWUSR & st.st_mode) {
+        printf("Write: Yes\n");
+    } else printf("Write: No\n");
+    if(S_IXUSR & st.st_mode) {
+        printf("Exec: Yes\n");
+    } else printf("Exec: No\n");
+    printf("Group:\n");
+    if(S_IRGRP & st.st_mode) {
+        printf("Read: Yes\n");
+    } else printf("Read: No\n");
+    if(S_IWGRP & st.st_mode) {
+        printf("Write: Yes\n");
+    } else printf("Write: No\n");
+    if(S_IXGRP & st.st_mode) {
+        printf("Exec: Yes\n");
+    } else printf("Exec: No\n");
+    printf("Other:\n");
+    if(S_IROTH & st.st_mode) {
+        printf("Read: Yes\n");
+    } else printf("Read: No\n");
+    if(S_IWOTH & st.st_mode) {
+        printf("Write: Yes\n");
+    } else printf("Write: No\n");
+    if(S_IXOTH & st.st_mode) {
+        printf("Exec: Yes\n");
+    } else printf("Exec: No\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -32,14 +74,12 @@ int main(int argc, char *argv[]) {
                 printf("Options: ");
                 int option = getchar();
                 int running = 1;
-                int inSwitch = 0;
                 pid_t menu = fork();
                 if(menu == 0) {
                     while((option = getchar()) != EOF && running) {
                         switch (option) {
                             case 'q':   running = 0;
                                         break;
-
                             case 'n':   printf("File name is: %s\n", argv[i]);
                                         break;
 
@@ -52,36 +92,7 @@ int main(int argc, char *argv[]) {
                             case 'm':   printf("Time of last modification is: %ld\n", st.st_mtime);
                                         break;
 
-                            case 'a':   printf("User:\n");
-                                        if(S_IRUSR & st.st_mode){
-                                            printf("Read: Yes\n");
-                                        } else printf("Read: No\n");
-                                        if(S_IWUSR & st.st_mode) {
-                                            printf("Write: Yes\n");
-                                        } else printf("Write: No\n");
-                                        if(S_IXUSR & st.st_mode) {
-                                            printf("Exec: Yes\n");
-                                        } else printf("Exec: No\n");
-                                        printf("Group:\n");
-                                        if(S_IRGRP & st.st_mode) {
-                                            printf("Read: Yes\n");
-                                        } else printf("Read: No\n");
-                                        if(S_IWGRP & st.st_mode) {
-                                            printf("Write: Yes\n");
-                                        } else printf("Write: No\n");
-                                        if(S_IXGRP & st.st_mode) {
-                                            printf("Exec: Yes\n");
-                                        } else printf("Exec: No\n");
-                                        printf("Other:\n");
-                                        if(S_IROTH & st.st_mode) {
-                                            printf("Read: Yes\n");
-                                        } else printf("Read: No\n");
-                                        if(S_IWOTH & st.st_mode) {
-                                            printf("Write: Yes\n");
-                                        } else printf("Write: No\n");
-                                        if(S_IXOTH & st.st_mode) {
-                                            printf("Exec: Yes\n");
-                                        } else printf("Exec: No\n");
+                            case 'a':   access_rights(argv[i]);
                                         break;
 
                             case 'l':   char link[26];
@@ -97,18 +108,9 @@ int main(int argc, char *argv[]) {
                             default:    break;
                         }
                     }
-                    exit(0);
                 } else if(menu > 0) {
-                    int status;
-                    wait(&status);
-                }
-                } else {
-                    perror("Error with menu process");
-                    exit(-2);
-                }
-                if(strstr(argv[i], ".c") != NULL) {
+                    if(strstr(argv[i], ".c") != NULL) {
                     int pfd[2]; //[0] - read, [1] - write
-                    char buffer[30];
                     int newfd;
                     if(pipe(pfd) < 0) {
                         perror("Could not create pipe");
@@ -126,7 +128,6 @@ int main(int argc, char *argv[]) {
                             exit(1);
                         }
                         execlp("bash", "bash", "compile.sh", argv[i], NULL);
-                        //write(pfd[1], buffer, sizeof(buffer)/sizeof(buffer[0]));
                         close(pfd[1]);
                         exit(1);
                     }
@@ -135,17 +136,20 @@ int main(int argc, char *argv[]) {
                     char string[100];
                     fscanf(stream, "%s", string);
                     int errors = atoi(string);
-                    //fprintf(stdout, "There are %d errors\n", errors);
                     fscanf(stream, "%s", string);
                     int warnings = atoi(string);
-                    //fprintf(stdout, "There are %d warnings\n", warnings);
-
-                    float score = 0;
-                    printf("Total score is: %.2f\n", getScore(score, errors, warnings));
+                    getScore(errors, warnings, argv[i]);
                     close(pfd[0]);
+                    int status;
+                    wait(&status);
+                    
+                } else {
+                    perror("Error with menu process");
+                    exit(-2);
+                }
+                
                 } else {
                     int pfd[2]; //[0] - read, [1] - write
-                    char buffer[30];
                     int newfd;
                     if(pipe(pfd) < 0) {
                         perror("Could not create pipe");
@@ -176,7 +180,47 @@ int main(int argc, char *argv[]) {
                     close(pfd[0]);
                 }
         }
+        if(S_ISLNK(st.st_mode) != 0) {
+            fflush(stdin);
+            int option = getchar();
+            int running = 1;
+            printf("\n");
+            pid_t menu = fork();
+            if(menu == 0) {
+                while((option = getchar()) != EOF && running) {
+                    switch(option) {
+                        case 'q':   running = 0;
+                                    break;
+                        case 'n':   printf("Symbolic link name is: %s\n", argv[i]);
+                                    break;
+                        case 'l':   printf("Deleting symbolic link...\n");
+                                    unlink(argv[i]);
+                                    exit(0);
+                                    break;
+                        case 'd':   printf("Size of the symbolic link is: %ld\n", st.st_size);
+                                    break;
+                        case 't':   struct stat target;
+                                    stat(argv[i], &target);
+                                    printf("Size of the target file is: %ld\n", target.st_size);
+                        case 'a':   access_rights(argv[i]);
+                                    break;
+                        default:    printf("'%c' is not a valid option in the menu!\n");
+                                    break;
+                    }
+                }
+            } else if(menu > 0) {
+                int status;
+                wait(&status);
+            } else {
+                perror("Could not create child process!");
+                exit(1);
+            }
+        }
+        if(S_ISDIR(st.st_mode) != 0) {
+            printf("This is a directory!\n");
+        }
     }
-    
+    }
+
     return 0;
 }
