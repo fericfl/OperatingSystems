@@ -13,11 +13,9 @@ void countCFiles(char* arg) {
     DIR* dir;
     struct dirent* readd;
     int count = 0;
-    int lenght = 0;
     dir = opendir(arg);
     if(dir != NULL) {
         while((readd = readdir(dir)) != NULL) {
-            lenght = strlen(readd->d_name);
             if(strstr(readd->d_name, ".c") != NULL)
                 count++;
         }
@@ -105,7 +103,7 @@ int main(int argc, char *argv[]) {
                     printf("Options: ");
                     int option = getchar();
                     int running = 1;
-                    while((option = getchar()) != EOF && running) {
+                    while(running && (option = getchar()) != EOF) {
                         switch (option) {
                             case 'q':   running = 0;
                                         break;
@@ -147,7 +145,7 @@ int main(int argc, char *argv[]) {
                     printf("This is a link file\nWhat do you want to do with it?\n[-n] - File name\n[-l] - Delete symbolic link\n[-d] - Size of symbolic link\n[-t] - Size of target file\n[-a] - Access rights\n[-q] - Quit the program / Go to next argument\nOptions:");
                     int option = getchar();
                     int running = 1;
-                    while((option = getchar()) != EOF && running) {
+                    while(running && (option = getchar()) != EOF) {
                         switch(option) {
                             case 'q':   running = 0;
                                         break;
@@ -179,7 +177,7 @@ int main(int argc, char *argv[]) {
                     printf("What do you want to do with it?\n[-n] - Directory name\n[-d] - Size of directory\n[-a] - Access rights\n[-c] - Total number of files with the .c extension\n[-q] - Quit program / Go to next argument\nOptions:");
                     int running = 1;
                     int option;
-                    while((option = getchar()) != EOF && running) {
+                    while(running && (option = getchar()) != EOF) {
                         switch (option)
                         {
                         case 'n':
@@ -208,8 +206,13 @@ int main(int argc, char *argv[]) {
                     }
                 }
             } else if(menu > 0) {
-                int status;
-                wait(&status);
+                pid_t status = waitpid(menu, &status, 0);
+                if(WIFEXITED(status)) {
+                    int exitCode = WEXITSTATUS(status);
+                    printf("\nThe process with PID %d has ended with the exit code %d\n",status, exitCode);
+                } else {
+                    printf("The process with PID %d has terminated abnormally\n", status);
+                }
                 pid_t s_child = fork();
                 if(s_child < 0) {
                     perror("Second child process could not be created");
@@ -266,7 +269,6 @@ int main(int argc, char *argv[]) {
                                 exit(1);
                             }
                             execlp("bash", "bash", "word_count.sh", argv[i], NULL);
-                            //write(pfd[1], buffer, sizeof(buffer)/sizeof(buffer[0]));
                             close(pfd[1]);
                             exit(1);
                         }
@@ -305,8 +307,13 @@ int main(int argc, char *argv[]) {
                         exit(EXIT_SUCCESS);
                     }
                 } else {
-                    int status;
-                    wait(&status);
+                    pid_t status = waitpid(s_child, &status, 0);
+                    if(WIFEXITED(status)) {
+                        int exitCode = WEXITSTATUS(status);
+                        printf("\nThe process with PID %d has ended with the exit code %d\n",status, exitCode);
+                    } else {
+                        printf("The process with PID %d has terminated abnormally\n", status);
+                    }
                 }
                     
             } else {
