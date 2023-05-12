@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
                     } 
                     if(S_ISLNK(st.st_mode) != 0) {
                         printf("Changing permissions for symbolic link %s\n", argv[i]);
-                        execlp("chmod", "chmod", "-h", "u=rwx,g=rw,o=", argv[i], NULL);
+                        execlp("chmod", "chmod", "u=rwx,g=rw,o=", argv[i], NULL);
                         perror("execlp");
                         exit(1);   
     
