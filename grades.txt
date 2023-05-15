@@ -13,3 +13,9 @@ test.c:8.40
 test.c:8.40
 test.c:8.40
 test.c:8.40
+program.c:10.00
+program.c:10.00
+program.c:10.00
+program.c:10.00
+program.c:10.00
+program.c:10.00

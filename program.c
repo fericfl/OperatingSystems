@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <time.h>
 
 //COUNT C FILES INSIDE DIRECTORY
 void countCFiles(char* arg) {
@@ -116,7 +117,9 @@ int main(int argc, char *argv[]) {
                             case 'h':   printf("\nTotal number of hard links is: %ld", st.st_nlink);
                                         break;
 
-                            case 'm':   printf("\nTime of last modification is: %ld", st.st_mtime);
+                            case 'm':   time_t modificationTime = st.st_mtime;
+                                        char* modifiedTime = ctime(&modificationTime);
+                                        printf("\nTime of last modification is: %s", modifiedTime);
                                         break;
 
                             case 'a':   access_rights(argv[i]);
